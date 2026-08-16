@@ -43,7 +43,7 @@ app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
-app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Reliability Command Center API' }));
+app.get('/api/health', (req, res) => res.json({ ok: true, service: 'ResolveOps API' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/notifications', notificationRoutes);

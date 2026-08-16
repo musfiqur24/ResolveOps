@@ -1,4 +1,4 @@
-# /AutoReliability — Reliability Command Center
+# ResolveOps — Incident Command Center
 
 A pure MERN **Incident Management & On-Call Tracker** project for DevOps students.
 
@@ -41,7 +41,7 @@ This is a mini PagerDuty-style system where teams can report incidents, assign e
 ## Project Structure
 
 ```txt
-reliability-command-center/
+resolveops/
 ├── backend/
 │   ├── src/
 │   │   ├── config/
@@ -179,7 +179,7 @@ http://localhost:5001/api/health
 ## Default Login
 
 ```txt
-Email: admin@auto-reliability.com
+Email: admin@resolveops.local
 Password: hello123
 ```
 
@@ -317,7 +317,7 @@ http://YOUR_EC2_PUBLIC_IP:5001/api/health
 Login:
 
 ```txt
-admin@auto-reliability.com
+admin@resolveops.local
 hello123
 ```
 
@@ -435,7 +435,7 @@ npm run seed
 Use:
 
 ```txt
-admin@auto-reliability.com
+admin@resolveops.local
 hello123
 ```
 
@@ -485,7 +485,7 @@ How it works:
 The app inserts the selected user as an email-based mention, for example:
 
 ```txt
-@ava@auto-reliability.com please check the payment API logs.
+@ava@resolveops.local please check the payment API logs.
 ```
 
 The mentioned user receives an in-app notification. When the user opens the notification, they can read the notification details and open the related incident directly.

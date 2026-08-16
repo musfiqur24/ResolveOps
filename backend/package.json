@@ -1,5 +1,5 @@
 {
-  "name": "reliability-command-center-api",
+  "name": "resolveops-api",
   "version": "1.0.0",
   "private": true,
   "main": "src/server.js",

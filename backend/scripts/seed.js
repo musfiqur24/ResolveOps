@@ -9,10 +9,10 @@ async function run() {
   await connectDB();
   await Promise.all([User.deleteMany({}), Incident.deleteMany({}), Notification.deleteMany({})]);
   const users = await User.create([
-    { name: 'Nure Admin', email: 'admin@auto-reliability.com', password: 'hello123', role: 'admin', team: 'Platform', isOnCall: true },
-    { name: 'Ayesha Reliability', email: 'ayesha@auto-reliability.com', password: 'hello123', role: 'engineer', team: 'SRE', isOnCall: true },
-    { name: 'Rahim Backend', email: 'rahim@auto-reliability.com', password: 'hello123', role: 'engineer', team: 'Backend', isOnCall: false },
-    { name: 'Disha DevOps', email: 'disha@auto-reliability.com', password: 'hello123', role: 'engineer', team: 'DevOps', isOnCall: false }
+    { name: 'Nure Admin', email: 'admin@resolveops.local', password: 'hello123', role: 'admin', team: 'Platform', isOnCall: true },
+    { name: 'Ayesha Reliability', email: 'ayesha@resolveops.local', password: 'hello123', role: 'engineer', team: 'SRE', isOnCall: true },
+    { name: 'Rahim Backend', email: 'rahim@resolveops.local', password: 'hello123', role: 'engineer', team: 'Backend', isOnCall: false },
+    { name: 'Disha DevOps', email: 'disha@resolveops.local', password: 'hello123', role: 'engineer', team: 'DevOps', isOnCall: false }
   ]);
   const [admin, ayesha, rahim] = users;
   await Incident.create([
@@ -38,7 +38,7 @@ async function run() {
       actionItems: [{ text: 'Add retry alert for report-worker.', owner: 'Rahim', dueDate: new Date(Date.now() + 7 * 86400000), done: false }]
     }
   ]);
-  console.log('Seed complete. Login: admin@auto-reliability.com / hello123');
+  console.log('Seed complete. Login: admin@resolveops.local / hello123');
   await mongoose.connection.close();
 }
 run().catch(err => { console.error(err); process.exit(1); });

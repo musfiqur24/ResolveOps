@@ -132,7 +132,7 @@ export default function IncidentDetail() {
       `MTTR: ${incident.mttrMinutes ?? 'N/A'} minutes`,
       '', 'Impact:', incident.impact || 'N/A', '', 'Root Cause:', post.rootCause || 'N/A', '', 'Resolution:', post.resolution || 'N/A', '', 'Action Items:', post.actionItemsText || 'N/A'
     ];
-    doc.setFontSize(16); doc.text('Reliability Command Center', 14, 18);
+    doc.setFontSize(16); doc.text('ResolveOps - Incident Report', 14, 18);
     doc.setFontSize(10); doc.text(lines, 14, 32, { maxWidth: 180 });
     doc.save(`postmortem-${incident._id}.pdf`);
   }

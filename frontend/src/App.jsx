@@ -8,7 +8,7 @@ import Team from './pages/Team.jsx';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="loading">Loading command center...</div>;
+  if (loading) return <div className="loading">Loading ResolveOps...</div>;
   return user ? children : <Navigate to="/login" replace />;
 }
 

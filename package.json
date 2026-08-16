@@ -1,5 +1,5 @@
 {
-  "name": "reliability-command-center",
+  "name": "resolveops",
   "version": "1.0.0",
   "private": true,
   "description": "Pure MERN Incident Management and On-Call Tracker for DevOps students.",

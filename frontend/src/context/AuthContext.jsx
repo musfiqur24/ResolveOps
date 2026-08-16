@@ -9,17 +9,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('rcc_token');
+    const token = localStorage.getItem('resolveops_token');
     if (!token) { setLoading(false); return; }
-    api.get('/auth/me').then(res => setUser(res.data.user)).catch(() => localStorage.removeItem('rcc_token')).finally(() => setLoading(false));
+    api.get('/auth/me').then(res => setUser(res.data.user)).catch(() => localStorage.removeItem('resolveops_token')).finally(() => setLoading(false));
   }, []);
 
   async function login(email, password) {
     const res = await api.post('/auth/login', { email, password });
-    localStorage.setItem('rcc_token', res.data.token);
+    localStorage.setItem('resolveops_token', res.data.token);
     setUser(res.data.user);
   }
-  function logout() { localStorage.removeItem('rcc_token'); setUser(null); }
+  function logout() { localStorage.removeItem('resolveops_token'); setUser(null); }
 
   return <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>;
 }
