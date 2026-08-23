@@ -4,8 +4,8 @@ const createNotification = require('../utils/createNotification');
 const mongoose = require('mongoose');
 
 const populate = [
-  { path: 'assignedTo', select: 'name email role team isOnCall' },
-  { path: 'reportedBy', select: 'name email role team isOnCall' },
+  { path: 'assignedTo', select: 'name email role group isOnCall', populate: { path: 'group', select: 'name' } },
+  { path: 'reportedBy', select: 'name email role group isOnCall', populate: { path: 'group', select: 'name' } },
   { path: 'timeline.author', select: 'name email' }
 ];
 
@@ -34,7 +34,7 @@ function mentionKey(value = '') {
 }
 
 async function findMentionedUsers(message = '') {
-  const users = await User.find().select('name email role team isOnCall');
+  const users = await User.find().select('name email role group isOnCall').populate('group', 'name');
   const tokens = [...String(message).matchAll(/@([\w.-]+(?:@[\w.-]+)?)/g)].map(match => mentionKey(match[1]));
   if (!tokens.length) return [];
 
@@ -153,6 +153,6 @@ exports.getStats = async (req, res) => {
   const avgMttr = mttrs.length ? Math.round(mttrs.reduce((a, b) => a + b, 0) / mttrs.length) : 0;
   const bySeverity = ['low', 'medium', 'high', 'critical'].reduce((acc, s) => ({ ...acc, [s]: incidents.filter(i => i.severity === s).length }), {});
   const byStatus = ['open', 'investigating', 'resolved'].reduce((acc, s) => ({ ...acc, [s]: incidents.filter(i => i.status === s).length }), {});
-  const onCall = await User.find({ isOnCall: true }).select('name email team role isOnCall');
+  const onCall = await User.find({ isOnCall: true }).select('name email group role isOnCall').populate('group', 'name');
   res.json({ total: incidents.length, avgMttr, bySeverity, byStatus, onCall });
 };

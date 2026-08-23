@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Incidents from './pages/Incidents.jsx';
 import IncidentDetail from './pages/IncidentDetail.jsx';
 import Team from './pages/Team.jsx';
+import Groups from './pages/Groups.jsx';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="incidents" element={<Incidents />} />
       <Route path="incidents/:id" element={<IncidentDetail />} />
       <Route path="team" element={<Team />} />
+      <Route path="groups" element={<Groups />} />
     </Route>
     <Route path="*" element={<div className="notfound"><h1>404</h1><p>Signal lost. Page not available.</p></div>} />
   </Routes>;

@@ -4,7 +4,8 @@ import Icon from '../ui/Icon.jsx';
 const links = [
   { to: '/', label: 'Dashboard', icon: 'grid', end: true },
   { to: '/incidents', label: 'Incidents', icon: 'table' },
-  { to: '/team', label: 'On-call team', icon: 'team' }
+  { to: '/team', label: 'On-call team', icon: 'team' },
+  { to: '/groups', label: 'Groups', icon: 'team' }
 ];
 
 export default function Sidebar({ onLogout }) {

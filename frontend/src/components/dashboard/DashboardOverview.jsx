@@ -10,7 +10,7 @@ export default function DashboardOverview({ isAdmin }) {
       <span className="section-eyebrow">Incident workspace</span>
       <h2>Keep the dashboard focused on the signal.</h2>
       <p>{isAdmin
-        ? 'Open Incidents to review the full queue, search incidents, and filter by engineer or status.'
+        ? 'Open Incidents to review the full queue, search incidents, and filter by assignee or status.'
         : 'Open Incidents to review the work currently assigned to you.'}</p>
     </div>
     <Link className="dashboard-overview__link" to="/incidents">

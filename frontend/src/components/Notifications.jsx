@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import Icon from './ui/Icon.jsx';
@@ -7,8 +7,17 @@ export default function Notifications() {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(null);
+  const notificationRef = useRef(null);
   async function load() { const res = await api.get('/notifications'); setItems(res.data.notifications || []); }
   useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, []);
+  useEffect(() => {
+    if (!open) return undefined;
+    function closeOnOutsideClick(event) {
+      if (!notificationRef.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, [open]);
   const unread = items.filter(i => !i.read).length;
   async function openNotification(note) {
     setActive(active?._id === note._id ? null : note);
@@ -32,7 +41,7 @@ export default function Notifications() {
       await markUnreadAsRead();
     }
   }
-  return <div className="notify">
+  return <div className="notify" ref={notificationRef}>
     <button
       aria-expanded={open}
       aria-label={unread ? unread + ' unread notifications' : 'Notifications'}

@@ -38,7 +38,7 @@ export default function IncidentDetail() {
     if (!mentionState.open) return [];
     const q = mentionState.query.toLowerCase();
     return users
-      .filter(u => `${u.name} ${u.email} ${u.team || ''} ${u.role || ''}`.toLowerCase().includes(q))
+      .filter(u => (u.name + ' ' + u.email + ' ' + (u.group?.name || '') + ' ' + (u.role || '')).toLowerCase().includes(q))
       .slice(0, 8);
   }, [mentionState, users]);
 
@@ -113,6 +113,11 @@ export default function IncidentDetail() {
       showToast(err.response?.data?.message || 'Unable to update this incident.', 'error');
     }
   }
+  function confirmStatusChange(nextStatus) {
+    if (nextStatus === incident.status) return;
+    if (!window.confirm('Change this incident status to ' + nextStatus + '?')) return;
+    updateField('status', nextStatus);
+  }
   async function addComment(e) {
     e.preventDefault();
     if (!comment.trim()) return;
@@ -169,7 +174,7 @@ export default function IncidentDetail() {
         {isAdmin && <button className="danger-btn" onClick={() => setDeleteConfirmOpen(true)}>Delete incident</button>}
       </div>
     </div>
-    {editing && isAdmin && <IncidentForm users={users} initial={incident} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}
+    {editing && isAdmin && <IncidentForm users={users} initial={incident} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); navigate('/incidents/' + id, { replace: true }); load(); }} />}
     {deleteConfirmOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-incident-title">
       <div className="confirm-modal">
         <h3 id="delete-incident-title">Delete incident?</h3>
@@ -184,8 +189,8 @@ export default function IncidentDetail() {
     <div className="detail-grid">
       <div className="panel">
         <h3>Incident Controls</h3>
-        <label>Status<select value={incident.status} onChange={e => updateField('status', e.target.value)}><option>open</option><option>investigating</option><option>resolved</option></select></label>
-        {isAdmin ? <label>Assigned Engineer<select value={incident.assignedTo?.id || incident.assignedTo?._id || ''} onChange={e => updateField('assignedTo', e.target.value)}><option value="">Unassigned</option>{users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label> : <div className="assignment-summary"><span>Assigned engineer</span><b>{incident.assignedTo?.name || 'Unassigned'}</b></div>}
+        <label>Status<select value={incident.status} onChange={e => confirmStatusChange(e.target.value)}><option>open</option><option>investigating</option><option>resolved</option></select></label>
+        {isAdmin ? <label>Assigned member<select value={incident.assignedTo?.id || incident.assignedTo?._id || ''} onChange={e => updateField('assignedTo', e.target.value)}><option value="">Unassigned</option>{users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label> : <div className="assignment-summary"><span>Assigned member</span><b>{incident.assignedTo?.name || 'Unassigned'}</b></div>}
         <div className="mini-stats"><div><span>Service</span><b>{incident.service}</b></div><div><span>MTTR</span><b>{incident.mttrMinutes ?? '—'}m</b></div></div>
       </div>
       <div className="panel">
@@ -198,6 +203,7 @@ export default function IncidentDetail() {
         </> : <div className="read-only-postmortem">
           <div><span>Root cause</span><p>{incident.rootCause || 'Not recorded yet.'}</p></div>
           <div><span>Resolution</span><p>{incident.resolution || 'Not recorded yet.'}</p></div>
+          <div><span>Action items</span>{incident.actionItems?.length ? <ul className="action-items-list">{incident.actionItems.map((item, index) => <li key={item._id || index}>{item.text}</li>)}</ul> : <p>No action items recorded yet.</p>}</div>
           <button className="ghost" onClick={exportPDF}>Export PDF</button>
         </div>}
       </div>
@@ -227,7 +233,7 @@ export default function IncidentDetail() {
                   onMouseEnter={() => setMentionState(prev => ({ ...prev, activeIndex: index }))}
                 >
                   <span className="mention-avatar">{u.name.slice(0, 1).toUpperCase()}</span>
-                  <span><b>{u.name}</b><small>{u.email} · {u.team || 'Reliability'} · {u.role || 'engineer'}</small></span>
+                  <span><b>{u.name}</b><small>{u.email} · {u.group?.name || 'No group'} · {u.role?.replaceAll('_', ' ') || 'Team member'}</small></span>
                 </button>
               )) : <div className="mention-empty">No user found.</div>}
             </div>

@@ -295,11 +295,15 @@
   right: 0;
   z-index: 80;
   width: min(360px, calc(100vw - 32px));
+  max-height: min(620px, calc(100vh - 96px));
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--surface);
   padding: 13px;
   box-shadow: 0 20px 48px rgba(28, 70, 78, .16);
+  white-space: normal;
 }
 
 .notify-menu h3 { margin: 2px 0 9px; font-size: 18px; }
@@ -307,6 +311,7 @@
 .note {
   border-bottom: 1px solid #EDF3F4;
   padding: 11px;
+  white-space: normal;
 }
 
 .note:last-child { border-bottom: 0; }
@@ -316,15 +321,19 @@
   background: var(--secondary-soft);
 }
 
-.note b { font-size: 13px; }
+.note b { display: block; font-size: 13px; overflow-wrap: anywhere; }
 
 .note p {
+  display: block;
   margin: 4px 0;
   color: var(--text-soft);
   font-size: 13px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
 
-.note small { color: var(--muted); font-size: 11px; }
+.note small { display: block; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
 
 .note-detail {
   margin-top: 9px;

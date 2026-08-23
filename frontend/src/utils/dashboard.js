@@ -60,8 +60,8 @@ export function getAssigneeId(incident) {
 
 export function getAssigneeName(incident) {
   if (!incident.assignedTo) return 'Unassigned';
-  if (typeof incident.assignedTo === 'string') return 'Assigned engineer';
-  return incident.assignedTo.name || incident.assignedTo.email || 'Assigned engineer';
+  if (typeof incident.assignedTo === 'string') return 'Assigned member';
+  return incident.assignedTo.name || incident.assignedTo.email || 'Assigned member';
 }
 
 export function statusLabel(status) {

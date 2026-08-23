@@ -45,6 +45,8 @@ export default function Incidents() {
   );
 
   async function handleStatusChange(id, status) {
+    const incident = incidents.find(item => item._id === id);
+    if (!window.confirm('Change "' + (incident?.title || 'this incident') + '" to ' + status + '?')) return;
     setUpdatingId(id);
     try {
       await updateStatus(id, status);
@@ -60,7 +62,7 @@ export default function Incidents() {
     <section className="incidents-header-card">
       <DashboardHeader
         description={isAdmin
-          ? 'Search the full response queue and focus it by engineer, status, service, or severity.'
+          ? 'Search the full response queue and focus it by assignee, status, service, or severity.'
           : 'Search and filter the incidents assigned to you.'}
         isAdmin={isAdmin}
         title={isAdmin ? 'All incidents' : 'My incidents'}

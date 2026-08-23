@@ -37,7 +37,7 @@ export default function DashboardFilters({
         <Icon name="search" size={18} />
         <span className="sr-only">Search incidents</span>
         <input
-          placeholder="Search incident, service, engineer..."
+          placeholder="Search incident, service, assignee..."
           value={filters.query}
           onChange={update('query')}
         />
@@ -56,8 +56,8 @@ export default function DashboardFilters({
         <option value="medium">Medium</option>
         <option value="low">Low</option>
       </select>
-      {isAdmin && <select aria-label="Filter by assigned engineer" value={filters.assignee} onChange={update('assignee')}>
-        <option value="">All engineers</option>
+      {isAdmin && <select aria-label="Filter by assigned member" value={filters.assignee} onChange={update('assignee')}>
+        <option value="">All assignees</option>
         <option value="unassigned">Unassigned</option>
         {users.map(user => <option key={user.id || user._id} value={user.id || user._id}>{user.name}</option>)}
       </select>}

@@ -2,16 +2,22 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { roleLabel, roleOptions } from '../utils/roles.js';
 
 export default function Team() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const isAdmin = user?.role === 'admin';
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ name: '', email: '', password: 'hello123', role: 'engineer', team: 'Reliability', isOnCall: false });
+  const [groups, setGroups] = useState([]);
+  const [form, setForm] = useState({ name: '', email: '', password: 'hello123', role: 'frontend_engineer', group: '', isOnCall: false });
   const [pendingDeleteUser, setPendingDeleteUser] = useState(null);
 
-  async function load() { const res = await api.get('/auth/users'); setUsers(res.data.users); }
+  async function load() {
+    const [usersResponse, groupsResponse] = await Promise.all([api.get('/auth/users'), api.get('/groups')]);
+    setUsers(usersResponse.data.users);
+    setGroups(groupsResponse.data.groups);
+  }
   useEffect(() => { load(); }, []);
 
   async function submit(e) {
@@ -19,7 +25,7 @@ export default function Team() {
     try {
       await api.post('/auth/users', form);
       showToast('User added successfully.', 'success');
-      setForm({ ...form, name: '', email: '' });
+      setForm({ ...form, name: '', email: '', group: '' });
       load();
     } catch (err) {
       showToast(err.response?.data?.message || 'Only admin can add users.', 'error');
@@ -38,23 +44,33 @@ export default function Team() {
     }
   }
 
+  async function toggleOnCall(member) {
+    try {
+      await api.patch('/auth/users/' + member.id, { isOnCall: !member.isOnCall });
+      showToast(member.name + (member.isOnCall ? ' moved to backup.' : ' is now on call.'), 'success');
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Unable to update on-call status.', 'error');
+    }
+  }
+
   return <section>
     <div className={`team-grid ${isAdmin ? '' : 'team-grid--single'}`}>
       <div className="panel">
         <h2>On-Call Roster</h2>
         {users.map(u => <div className="user-row" key={u.id}>
-          <div><b>{u.name}</b><span>{u.email} · {u.team}</span></div>
+          <div><b>{u.name}</b><span>{u.email} · {u.group?.name || 'No group'} · {roleLabel(u.role)}</span></div>
           <div className="roster-actions">
-            <span className={u.isOnCall ? 'oncall' : 'offcall'}>{u.isOnCall ? 'ON CALL' : 'BACKUP'}</span>
+            {isAdmin ? <button className={'roster-toggle ' + (u.isOnCall ? 'oncall' : 'offcall')} type="button" onClick={() => toggleOnCall(u)} title="Change on-call status">{u.isOnCall ? 'ON CALL' : 'BACKUP'}</button> : <span className={u.isOnCall ? 'oncall' : 'offcall'}>{u.isOnCall ? 'ON CALL' : 'BACKUP'}</span>}
             {isAdmin && user?.id !== u.id && <button className="danger-mini" onClick={() => setPendingDeleteUser(u)}>Delete</button>}
           </div>
         </div>)}
       </div>
-      {isAdmin && <form className="panel" onSubmit={submit}><h2>Add Engineer</h2><p className="muted">Create an admin or engineer account and set on-call status.</p>
+      {isAdmin && <form className="panel" onSubmit={submit}><h2>Add team member</h2><p className="muted">Create a role-based account and assign it to a group.</p>
         <label>Name<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required /></label>
-        <label>Email<input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></label>
+        <label>Email<input type="email" pattern="[^\\s@]+@[^\\s@]+\\.com" title="Enter an email ending in .com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></label>
         <label>Password<input value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required /></label>
-        <div className="grid2"><label>Role<select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}><option>engineer</option><option>admin</option></select></label><label>Team<input value={form.team} onChange={e => setForm({ ...form, team: e.target.value })} /></label></div>
+        <div className="grid2"><label>Role<select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>{roleOptions.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label><label>Group<select value={form.group} onChange={e => setForm({ ...form, group: e.target.value })}><option value="">No group</option>{groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}</select></label></div>
         <label className="check"><input type="checkbox" checked={form.isOnCall} onChange={e => setForm({ ...form, isOnCall: e.target.checked })} /> On-call now</label>
         <button className="primary">Add User</button>
       </form>}

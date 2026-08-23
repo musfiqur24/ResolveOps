@@ -5,8 +5,12 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, select: false },
-  role: { type: String, enum: ['admin', 'engineer'], default: 'engineer' },
-  team: { type: String, default: 'Reliability' },
+  role: {
+    type: String,
+    enum: ['admin', 'frontend_engineer', 'backend_engineer', 'devops_engineer', 'software_architect', 'database_engineer'],
+    default: 'frontend_engineer'
+  },
+  group: { type: mongoose.Schema.Types.ObjectId, ref: 'Group', default: null },
   isOnCall: { type: Boolean, default: false }
 }, { timestamps: true });
 
