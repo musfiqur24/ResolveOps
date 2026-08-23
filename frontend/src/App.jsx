@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext.jsx';
 import Layout from './components/Layout.jsx';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import Incidents from './pages/Incidents.jsx';
 import IncidentDetail from './pages/IncidentDetail.jsx';
 import Team from './pages/Team.jsx';
 
@@ -17,6 +18,7 @@ export default function App() {
     <Route path="/login" element={<Login />} />
     <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
       <Route index element={<Dashboard />} />
+      <Route path="incidents" element={<Incidents />} />
       <Route path="incidents/:id" element={<IncidentDetail />} />
       <Route path="team" element={<Team />} />
     </Route>

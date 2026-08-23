@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import Icon from './ui/Icon.jsx';
 
 export default function Notifications() {
   const [items, setItems] = useState([]);
@@ -11,13 +12,37 @@ export default function Notifications() {
   const unread = items.filter(i => !i.read).length;
   async function openNotification(note) {
     setActive(active?._id === note._id ? null : note);
-    if (!note.read) {
-      await api.patch(`/notifications/${note._id}/read`);
+  }
+  async function markUnreadAsRead() {
+    const unreadItems = items.filter(item => !item.read);
+    if (!unreadItems.length) return;
+
+    setItems(currentItems => currentItems.map(item => ({ ...item, read: true })));
+    try {
+      await Promise.all(unreadItems.map(item => api.patch('/notifications/' + item._id + '/read')));
+    } catch {
       load();
     }
   }
+  async function toggleMenu() {
+    const shouldOpen = !open;
+    setOpen(shouldOpen);
+    if (shouldOpen) {
+      setActive(null);
+      await markUnreadAsRead();
+    }
+  }
   return <div className="notify">
-    <button className="notify-btn" onClick={() => setOpen(!open)}>🔔 {unread}</button>
+    <button
+      aria-expanded={open}
+      aria-label={unread ? unread + ' unread notifications' : 'Notifications'}
+      className="notify-btn"
+      type="button"
+      onClick={toggleMenu}
+    >
+      <Icon name="bell" size={18} />
+      {unread > 0 && <span className="notify-count">{unread}</span>}
+    </button>
     {open && <div className="notify-menu">
       <h3>Notifications</h3>
       {items.length === 0 && <p className="muted">No notifications yet.</p>}
