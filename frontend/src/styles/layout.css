@@ -39,6 +39,13 @@
   font-weight: 900;
 }
 
+.brand-mark--image {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  object-fit: contain;
+}
+
 .sidebar-nav-label {
   margin: 0 11px 11px;
   color: #95A7AD;

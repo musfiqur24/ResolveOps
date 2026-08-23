@@ -10,7 +10,7 @@ const links = [
 export default function Sidebar({ onLogout }) {
   return <aside className="sidebar">
     <NavLink to="/" end className="sidebar-brand" aria-label="ResolveOps dashboard">
-      <span className="brand-mark" aria-hidden="true">R</span>
+      <img className="brand-mark brand-mark--image" src="/resolveOps_logo.png" alt="" />
       <span>ResolveOps</span>
     </NavLink>
 

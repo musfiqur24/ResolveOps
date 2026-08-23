@@ -14,7 +14,7 @@ export default function Login() {
   }
   return <div className="login-page">
     <form className="login-card" onSubmit={submit}>
-      <div className="brand-logo login-logo"><span className="brand-mark" aria-hidden="true">R</span>ResolveOps</div>
+      <div className="brand-logo login-logo"><img className="brand-mark brand-mark--image" src="/resolveOps_logo.png" alt="" />ResolveOps</div>
       <p className="brand-subtitle">Incident management</p>
       <h1>Respond with clarity.</h1>
       <p>Incident response, on-call coordination, and postmortems in one place.</p>
