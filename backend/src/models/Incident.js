@@ -20,6 +20,12 @@ const incidentSchema = new mongoose.Schema({
   impact: { type: String, default: '' },
   resolution: { type: String, default: '' },
   actionItems: [{ text: String, owner: String, dueDate: Date, done: { type: Boolean, default: false } }],
+  image: {
+    filename: String,
+    originalName: String,
+    mimeType: String,
+    size: Number
+  },
   timeline: [timelineSchema]
 }, { timestamps: true });
 

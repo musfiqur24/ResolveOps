@@ -24,6 +24,7 @@ export default function IncidentTable({ incidents, loading, onStatusChange, upda
           <tr>
             <th>ID</th>
             <th>Severity</th>
+            <th>Image</th>
             <th>Incident</th>
             <th>Status</th>
             <th>Assigned</th>

@@ -2,6 +2,8 @@ const Incident = require('../models/Incident');
 const User = require('../models/User');
 const createNotification = require('../utils/createNotification');
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 
 const populate = [
   { path: 'assignedTo', select: 'name email role group isOnCall', populate: { path: 'group', select: 'name' } },
@@ -138,6 +140,36 @@ exports.addComment = async (req, res) => {
   await notifyMentionedUsers({ message, incident, author: req.user });
   const output = await Incident.findById(incident._id).populate(populate);
   res.status(201).json({ incident: output });
+};
+
+exports.uploadImage = async (req, res) => {
+  const incident = await Incident.findById(req.params.id);
+  if (!incident) return res.status(404).json({ message: 'Incident not found.' });
+  if (!req.file) return res.status(400).json({ message: 'Choose an image to upload.' });
+
+  if (incident.image?.filename) {
+    const previousFile = path.join(__dirname, '../../uploads', path.basename(incident.image.filename));
+    fs.unlink(previousFile, () => {});
+  }
+
+  incident.image = {
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    mimeType: req.file.mimetype,
+    size: req.file.size
+  };
+  incident.timeline.push({ type: 'system', message: 'Incident image added.', author: req.user._id });
+  await incident.save();
+  const output = await Incident.findById(incident._id).populate(populate);
+  res.status(201).json({ incident: output });
+};
+
+exports.getImage = async (req, res) => {
+  const incident = await findAccessibleIncident(req.params.id, req.user);
+  if (!incident?.image?.filename) return res.status(404).json({ message: 'Incident image not found.' });
+  const imagePath = path.join(__dirname, '../../uploads', path.basename(incident.image.filename));
+  if (!fs.existsSync(imagePath)) return res.status(404).json({ message: 'Incident image file not found.' });
+  res.type(incident.image.mimeType || 'image/jpeg').sendFile(imagePath);
 };
 
 exports.deleteIncident = async (req, res) => {

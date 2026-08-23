@@ -1,9 +1,12 @@
 const express = require('express');
 const ctrl = require('../controllers/incidentController');
 const { protect, adminOnly } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 const router = express.Router();
 router.use(protect);
 router.get('/stats', ctrl.getStats);
+router.get('/:id/image', ctrl.getImage);
+router.post('/:id/image', adminOnly, upload.single('image'), ctrl.uploadImage);
 router.route('/').get(ctrl.getIncidents).post(adminOnly, ctrl.createIncident);
 router.route('/:id').get(ctrl.getIncident).patch(ctrl.updateIncident).delete(adminOnly, ctrl.deleteIncident);
 router.post('/:id/comments', ctrl.addComment);

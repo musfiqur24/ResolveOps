@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import api from '../services/api';
 import IncidentForm from '../components/IncidentForm.jsx';
+import IncidentImage from '../components/IncidentImage.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 
@@ -166,7 +167,7 @@ export default function IncidentDetail() {
   }
 
   return <section className="detail">
-    <Link to="/" className="back">← Dashboard</Link>
+    <Link to="/incidents" className="back">← Incidents</Link>
     <div className="detail-hero">
       <div><span className={`badge sev-${incident.severity}`}>{incident.severity}</span><h2>{incident.title}</h2><p>{incident.description}</p></div>
       <div className="detail-actions">
@@ -174,6 +175,7 @@ export default function IncidentDetail() {
         {isAdmin && <button className="danger-btn" onClick={() => setDeleteConfirmOpen(true)}>Delete incident</button>}
       </div>
     </div>
+    <IncidentImage incident={incident} />
     {editing && isAdmin && <IncidentForm users={users} initial={incident} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); navigate('/incidents/' + id, { replace: true }); load(); }} />}
     {deleteConfirmOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-incident-title">
       <div className="confirm-modal">

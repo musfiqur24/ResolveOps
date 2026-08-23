@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../ui/Icon.jsx';
 import SeverityBadge from './SeverityBadge.jsx';
 import StatusBadge from './StatusBadge.jsx';
+import IncidentImageThumbnail from '../IncidentImageThumbnail.jsx';
 import {
   formatDate,
   getAssigneeName,
@@ -15,6 +16,7 @@ export default function IncidentTableRow({ incident, onStatusChange, updating })
   return <tr>
     <td><Link className="incident-id-link" to={incidentPath}>{incidentDisplayId(incident)}</Link></td>
     <td><SeverityBadge severity={incident.severity} /></td>
+    <td><IncidentImageThumbnail incident={incident} /></td>
     <td className="incident-table__description">
       <Link to={incidentPath}>
         <b>{incident.title}</b>
