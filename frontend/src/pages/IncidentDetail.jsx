@@ -19,11 +19,18 @@ export default function IncidentDetail() {
   const [editing, setEditing] = useState(false);
   const [post, setPost] = useState({ rootCause: '', resolution: '', actionItemsText: '' });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [error, setError] = useState('');
+  const isAdmin = user?.role === 'admin';
 
   async function load() {
-    const [i, u] = await Promise.all([api.get(`/incidents/${id}`), api.get('/auth/users')]);
-    setIncident(i.data.incident); setUsers(u.data.users);
-    setPost({ rootCause: i.data.incident.rootCause || '', resolution: i.data.incident.resolution || '', actionItemsText: (i.data.incident.actionItems || []).map(a => a.text).join('\n') });
+    setError('');
+    try {
+      const [i, u] = await Promise.all([api.get(`/incidents/${id}`), api.get('/auth/users')]);
+      setIncident(i.data.incident); setUsers(u.data.users);
+      setPost({ rootCause: i.data.incident.rootCause || '', resolution: i.data.incident.resolution || '', actionItemsText: (i.data.incident.actionItems || []).map(a => a.text).join('\n') });
+    } catch (err) {
+      setError(err.response?.data?.message || 'This incident is unavailable.');
+    }
   }
   useEffect(() => { load(); }, [id]);
 
@@ -35,6 +42,11 @@ export default function IncidentDetail() {
       .slice(0, 8);
   }, [mentionState, users]);
 
+  if (error) return <section className="empty-board detail-empty">
+    <h2>{error}</h2>
+    <p>This incident may not be assigned to you, or it may no longer exist.</p>
+    <Link to="/" className="ghost">Return to dashboard</Link>
+  </section>;
   if (!incident) return <div className="loading">Loading incident...</div>;
 
   function detectMention(value, cursorPosition) {
@@ -93,7 +105,14 @@ export default function IncidentDetail() {
     }
   }
 
-  async function updateField(field, value) { await api.patch(`/incidents/${id}`, { [field]: value }); load(); }
+  async function updateField(field, value) {
+    try {
+      await api.patch(`/incidents/${id}`, { [field]: value });
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Unable to update this incident.', 'error');
+    }
+  }
   async function addComment(e) {
     e.preventDefault();
     if (!comment.trim()) return;
@@ -116,10 +135,14 @@ export default function IncidentDetail() {
   }
 
   async function savePostmortem() {
-    const actionItems = post.actionItemsText.split('\n').filter(Boolean).map(text => ({ text, owner: incident.assignedTo?.name || 'TBD' }));
-    await api.patch(`/incidents/${id}`, { rootCause: post.rootCause, resolution: post.resolution, actionItems });
-    await api.post(`/incidents/${id}/comments`, { message: 'Postmortem updated.' });
-    load();
+    try {
+      const actionItems = post.actionItemsText.split('\n').filter(Boolean).map(text => ({ text, owner: incident.assignedTo?.name || 'TBD' }));
+      await api.patch(`/incidents/${id}`, { rootCause: post.rootCause, resolution: post.resolution, actionItems });
+      await api.post(`/incidents/${id}/comments`, { message: 'Postmortem updated.' });
+      load();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Unable to save the postmortem.', 'error');
+    }
   }
   function exportPDF() {
     const doc = new jsPDF();
@@ -142,11 +165,11 @@ export default function IncidentDetail() {
     <div className="detail-hero">
       <div><span className={`badge sev-${incident.severity}`}>{incident.severity}</span><h2>{incident.title}</h2><p>{incident.description}</p></div>
       <div className="detail-actions">
-        <button className="cyan-pill" onClick={() => setEditing(true)}>Edit Incident</button>
-        {user?.role === 'admin' && <button className="danger-btn" onClick={() => setDeleteConfirmOpen(true)}>Delete Incident</button>}
+        {isAdmin && <button className="cyan-pill" onClick={() => setEditing(true)}>Edit incident</button>}
+        {isAdmin && <button className="danger-btn" onClick={() => setDeleteConfirmOpen(true)}>Delete incident</button>}
       </div>
     </div>
-    {editing && <IncidentForm users={users} initial={incident} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}
+    {editing && isAdmin && <IncidentForm users={users} initial={incident} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}
     {deleteConfirmOpen && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-incident-title">
       <div className="confirm-modal">
         <h3 id="delete-incident-title">Delete incident?</h3>
@@ -162,15 +185,21 @@ export default function IncidentDetail() {
       <div className="panel">
         <h3>Incident Controls</h3>
         <label>Status<select value={incident.status} onChange={e => updateField('status', e.target.value)}><option>open</option><option>investigating</option><option>resolved</option></select></label>
-        <label>Assigned Engineer<select value={incident.assignedTo?.id || incident.assignedTo?._id || ''} onChange={e => updateField('assignedTo', e.target.value)}><option value="">Unassigned</option>{users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
+        {isAdmin ? <label>Assigned Engineer<select value={incident.assignedTo?.id || incident.assignedTo?._id || ''} onChange={e => updateField('assignedTo', e.target.value)}><option value="">Unassigned</option>{users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label> : <div className="assignment-summary"><span>Assigned engineer</span><b>{incident.assignedTo?.name || 'Unassigned'}</b></div>}
         <div className="mini-stats"><div><span>Service</span><b>{incident.service}</b></div><div><span>MTTR</span><b>{incident.mttrMinutes ?? '—'}m</b></div></div>
       </div>
       <div className="panel">
         <h3>Postmortem</h3>
-        <label>Root Cause<textarea value={post.rootCause} onChange={e => setPost({ ...post, rootCause: e.target.value })} /></label>
-        <label>Resolution<textarea value={post.resolution} onChange={e => setPost({ ...post, resolution: e.target.value })} /></label>
-        <label>Action Items<textarea value={post.actionItemsText} onChange={e => setPost({ ...post, actionItemsText: e.target.value })} placeholder="One item per line" /></label>
-        <div className="action-row"><button className="primary" onClick={savePostmortem}>Save Postmortem</button><button className="ghost" onClick={exportPDF}>Export PDF</button></div>
+        {isAdmin ? <>
+          <label>Root Cause<textarea value={post.rootCause} onChange={e => setPost({ ...post, rootCause: e.target.value })} /></label>
+          <label>Resolution<textarea value={post.resolution} onChange={e => setPost({ ...post, resolution: e.target.value })} /></label>
+          <label>Action Items<textarea value={post.actionItemsText} onChange={e => setPost({ ...post, actionItemsText: e.target.value })} placeholder="One item per line" /></label>
+          <div className="action-row"><button className="primary" onClick={savePostmortem}>Save Postmortem</button><button className="ghost" onClick={exportPDF}>Export PDF</button></div>
+        </> : <div className="read-only-postmortem">
+          <div><span>Root cause</span><p>{incident.rootCause || 'Not recorded yet.'}</p></div>
+          <div><span>Resolution</span><p>{incident.resolution || 'Not recorded yet.'}</p></div>
+          <button className="ghost" onClick={exportPDF}>Export PDF</button>
+        </div>}
       </div>
     </div>
     <div className="panel timeline-panel">

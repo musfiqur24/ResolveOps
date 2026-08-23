@@ -4,6 +4,14 @@ import Notifications from './Notifications.jsx';
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const initials = (user?.name || 'User')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase();
+  const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Engineer';
 
   return <div className="shell">
     <header className="app-header">
@@ -12,20 +20,29 @@ export default function Layout() {
           <span className="brand-mark" aria-hidden="true">R</span>
           ResolveOps
         </NavLink>
-        <nav className="app-nav" aria-label="Primary navigation">
-          <NavLink to="/" end>Dashboard</NavLink>
-          <NavLink to="/team">On-Call Team</NavLink>
-          <button type="button" onClick={logout}>Logout</button>
-        </nav>
+        <div className="header-actions">
+          <nav className="app-nav" aria-label="Primary navigation">
+            <NavLink to="/" end>Dashboard</NavLink>
+            <NavLink to="/team">On-Call Team</NavLink>
+            <button type="button" onClick={logout}>Logout</button>
+          </nav>
+          <Notifications />
+          <div className="user-profile" aria-label={`Signed in as ${user?.name || 'user'}, ${roleLabel}`}>
+            <span className="user-avatar" aria-hidden="true">{initials}</span>
+            <span className="user-profile__copy">
+              <b>{user?.name || 'User'}</b>
+              <small>{roleLabel}</small>
+            </span>
+          </div>
+        </div>
       </div>
     </header>
     <main className="content">
       <div className="welcome-card">
         <span>Incident Management</span>
         <h2>Respond with clarity.</h2>
-        <p>Detect fast, coordinate response, and resolve with confidence.</p>
+        <p>{user?.role === 'admin' ? 'Monitor every incident and coordinate the response.' : 'Focus on the incidents assigned to you.'}</p>
       </div>
-      <div className="topbar"><div>Signed in as <b>{user?.name}</b></div><Notifications /></div>
       <Outlet />
     </main>
   </div>;

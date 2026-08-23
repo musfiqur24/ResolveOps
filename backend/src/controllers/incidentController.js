@@ -1,12 +1,33 @@
 const Incident = require('../models/Incident');
 const User = require('../models/User');
 const createNotification = require('../utils/createNotification');
+const mongoose = require('mongoose');
 
 const populate = [
   { path: 'assignedTo', select: 'name email role team isOnCall' },
   { path: 'reportedBy', select: 'name email role team isOnCall' },
   { path: 'timeline.author', select: 'name email' }
 ];
+
+// Engineers can work only on incidents currently assigned to them. Applying
+// this to every query avoids leaking the existence of other incidents.
+function incidentAccessFilter(user) {
+  return user?.role === 'admin' ? {} : { assignedTo: user._id };
+}
+
+async function findAccessibleIncident(id, user, shouldPopulate = false) {
+  if (!mongoose.isValidObjectId(id)) return null;
+
+  let query = Incident.findOne({ _id: id, ...incidentAccessFilter(user) });
+  if (shouldPopulate) query = query.populate(populate);
+  return query;
+}
+
+function normalizeAssignee(value) {
+  if (value && typeof value === 'object' && value._id) return value._id;
+  if (value && typeof value === 'object' && typeof value.id === 'string') return value.id;
+  return value;
+}
 
 function mentionKey(value = '') {
   return String(value).toLowerCase().replace(/^@/, '').replace(/[^a-z0-9]/g, '');
@@ -53,7 +74,7 @@ exports.createIncident = async (req, res) => {
 
 exports.getIncidents = async (req, res) => {
   const { status, severity, q } = req.query;
-  const filter = {};
+  const filter = incidentAccessFilter(req.user);
   if (status) filter.status = status;
   if (severity) filter.severity = severity;
   if (q) filter.$or = [
@@ -66,23 +87,32 @@ exports.getIncidents = async (req, res) => {
 };
 
 exports.getIncident = async (req, res) => {
-  const incident = await Incident.findById(req.params.id).populate(populate);
+  const incident = await findAccessibleIncident(req.params.id, req.user, true);
   if (!incident) return res.status(404).json({ message: 'Incident not found.' });
   res.json({ incident });
 };
 
 exports.updateIncident = async (req, res) => {
-  const incident = await Incident.findById(req.params.id);
+  const incident = await findAccessibleIncident(req.params.id, req.user);
   if (!incident) return res.status(404).json({ message: 'Incident not found.' });
-  const fields = ['title', 'service', 'description', 'severity', 'status', 'assignedTo', 'rootCause', 'impact', 'resolution'];
+
+  // An engineer can update progress on their own assigned incident, but all
+  // incident management, reassignment, and postmortem fields belong to admins.
+  const adminFields = ['title', 'service', 'description', 'severity', 'status', 'assignedTo', 'rootCause', 'impact', 'resolution'];
+  const fields = req.user.role === 'admin' ? adminFields : ['status'];
+  if (req.user.role !== 'admin' && Object.keys(req.body).some(field => !fields.includes(field))) {
+    return res.status(403).json({ message: 'Engineers can only update the status of their assigned incidents.' });
+  }
+
   const changes = [];
   for (const field of fields) {
-    if (req.body[field] !== undefined && String(incident[field] || '') !== String(req.body[field] || '')) {
+    const nextValue = field === 'assignedTo' ? normalizeAssignee(req.body[field]) : req.body[field];
+    if (nextValue !== undefined && String(incident[field] || '') !== String(nextValue || '')) {
       changes.push(field);
-      incident[field] = req.body[field] || undefined;
+      incident[field] = nextValue || undefined;
     }
   }
-  if (req.body.actionItems) incident.actionItems = req.body.actionItems;
+  if (req.user.role === 'admin' && req.body.actionItems) incident.actionItems = req.body.actionItems;
   if (changes.includes('status')) {
     incident.timeline.push({ type: 'status', message: `Status changed to ${incident.status}.`, author: req.user._id });
     if (incident.status === 'resolved' && !incident.resolvedAt) incident.resolvedAt = new Date();
@@ -101,7 +131,7 @@ exports.updateIncident = async (req, res) => {
 exports.addComment = async (req, res) => {
   const { message } = req.body;
   if (!message) return res.status(400).json({ message: 'Comment message is required.' });
-  const incident = await Incident.findById(req.params.id);
+  const incident = await findAccessibleIncident(req.params.id, req.user);
   if (!incident) return res.status(404).json({ message: 'Incident not found.' });
   incident.timeline.push({ type: 'comment', message, author: req.user._id });
   await incident.save();
@@ -117,7 +147,7 @@ exports.deleteIncident = async (req, res) => {
 };
 
 exports.getStats = async (req, res) => {
-  const incidents = await Incident.find();
+  const incidents = await Incident.find(incidentAccessFilter(req.user));
   const resolved = incidents.filter(i => i.status === 'resolved' && i.resolvedAt);
   const mttrs = resolved.map(i => (i.resolvedAt - i.startedAt) / 60000);
   const avgMttr = mttrs.length ? Math.round(mttrs.reduce((a, b) => a + b, 0) / mttrs.length) : 0;

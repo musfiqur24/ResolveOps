@@ -38,6 +38,79 @@ This is a mini PagerDuty-style system where teams can report incidents, assign e
 
 ---
 
+## Docker development (recommended)
+
+Docker Compose starts the frontend, backend, and MongoDB together. Source
+directories are mounted into the Node containers, so edits to React or Express
+code reload automatically without rebuilding an image.
+
+### 1. Install Docker Desktop
+
+Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/), then confirm Compose is available:
+
+```bash
+docker compose version
+```
+
+### 2. Create local Docker environment values
+
+From the project root, copy the example file and replace the JWT secret:
+
+```bash
+cp .env.example .env
+```
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+The root `.env` is for Docker Compose only and is intentionally not committed.
+
+### 3. Start the development stack
+
+```bash
+docker compose up --build
+```
+
+Open the application at `http://localhost:5173`. The API health endpoint is
+`http://localhost:5001/api/health`.
+
+On the first start, seed the sample data from a second terminal:
+
+```bash
+docker compose exec backend npm run seed
+```
+
+Use the default login `admin@resolveops.local` / `hello123` after seeding.
+
+### Daily Docker commands
+
+```bash
+# Start services after their first build
+docker compose up
+
+# Follow logs from every service
+docker compose logs -f
+
+# Stop containers but retain the MongoDB data volume
+docker compose down
+
+# Rebuild after changing a package.json or package-lock.json
+docker compose up --build
+```
+
+The Compose file publishes MongoDB on port `27017` for MongoDB Compass and
+host-side debugging. If that port conflicts with a locally installed MongoDB,
+remove the `27017:27017` mapping from `docker-compose.yml`; the application
+containers will still connect to MongoDB normally.
+
+To fully reset the Docker database, run `docker compose down -v`. This removes
+the MongoDB data volume and cannot be undone.
+
+---
+
 ## Project Structure
 
 ```txt
@@ -73,7 +146,7 @@ resolveops/
 
 You need:
 
-- Node.js 20+
+- Node.js 20.19+ or 22.12+
 - npm
 - MongoDB Community Server
 
