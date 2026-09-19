@@ -11,34 +11,48 @@ const groupRoutes = require('./routes/groupRoutes');
 const startReminderJob = require('./utils/reminderJob');
 
 const app = express();
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-const ALLOWED_ORIGINS = process.env.CLIENT_URLS ? process.env.CLIENT_URLS.split(',').map(s => s.trim()) : [CLIENT_URL];
+const configuredOrigins = [process.env.CLIENT_URL, ...(process.env.CLIENT_URLS || '').split(',')]
+  .map(value => value?.trim())
+  .filter(Boolean)
+  .map(value => {
+    try { return new URL(value).origin; } catch { return value; }
+  });
+const ALLOWED_ORIGINS = new Set(configuredOrigins.length
+  ? configuredOrigins
+  : ['http://localhost:5173', 'http://127.0.0.1:5173']);
+
+function isAllowedDevelopmentOrigin(url) {
+  if (process.env.NODE_ENV === 'production') return false;
+
+  const hostname = url.hostname.toLowerCase();
+  return hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || /^10\./.test(hostname)
+    || /^192\.168\./.test(hostname)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+}
+
 const corsOptions = {
   origin: (origin, callback) => {
-    // allow requests with no origin (eg. mobile apps, curl)
+    // Non-browser clients such as curl do not send an Origin header.
     if (!origin) return callback(null, true);
     try {
       const url = new URL(origin);
-      // accept explicit allowed origins
-      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-      // in non-production, allow any host using the dev port (vite default)
-      const isDevPort = url.port === '5173' && process.env.NODE_ENV !== 'production';
-      if (isDevPort) return callback(null, true);
-    } catch (e) {
-      // if parsing fails, deny
-    }
-    return callback(new Error('CORS_NOT_ALLOWED'));
+      if (ALLOWED_ORIGINS.has(url.origin) || isAllowedDevelopmentOrigin(url)) {
+        return callback(null, true);
+      }
+    } catch { /* Invalid origins are denied below. */ }
+
+    const error = new Error(`Origin ${origin} is not allowed by CORS`);
+    error.status = 403;
+    return callback(error);
   },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Set-Cookie']
+  optionsSuccessStatus: 204
 };
-// Log origin for debug to help with CORS troubleshooting
-app.use((req, res, next) => {
-  if (req.path === '/api/auth/login') console.debug('Incoming Origin:', req.headers.origin);
-  next();
-});
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
